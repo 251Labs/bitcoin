@@ -10,7 +10,7 @@
 #include <util/system.h>
 #include <wallet/wallet.h>
 
-bool VerifyWallets(interfaces::Chain& chain, const std::vector<std::string>& wallet_files)
+Result<void, std::string> VerifyWallets(interfaces::Chain& chain, const std::vector<std::string>& wallet_files)
 {
     if (gArgs.IsArgSet("-walletdir")) {
         fs::path wallet_dir = gArgs.GetArg("-walletdir", "");
@@ -18,15 +18,12 @@ bool VerifyWallets(interfaces::Chain& chain, const std::vector<std::string>& wal
         // The canonical path cleans the path, preventing >1 Berkeley environment instances for the same directory
         fs::path canonical_wallet_dir = fs::canonical(wallet_dir, error);
         if (error || !fs::exists(wallet_dir)) {
-            chain.initError(strprintf(_("Specified -walletdir \"%s\" does not exist"), wallet_dir.string()));
-            return false;
+            return Error<std::string>(strprintf(_("Specified -walletdir \"%s\" does not exist"), wallet_dir.string()));
         } else if (!fs::is_directory(wallet_dir)) {
-            chain.initError(strprintf(_("Specified -walletdir \"%s\" is not a directory"), wallet_dir.string()));
-            return false;
+            return Error<std::string>(strprintf(_("Specified -walletdir \"%s\" is not a directory"), wallet_dir.string()));
         // The canonical path transforms relative paths into absolute ones, so we check the non-canonical version
         } else if (!wallet_dir.is_absolute()) {
-            chain.initError(strprintf(_("Specified -walletdir \"%s\" is a relative path"), wallet_dir.string()));
-            return false;
+            return Error<std::string>(strprintf(_("Specified -walletdir \"%s\" is a relative path"), wallet_dir.string()));
         }
         gArgs.ForceSetArg("-walletdir", canonical_wallet_dir.string());
     }
@@ -47,19 +44,17 @@ bool VerifyWallets(interfaces::Chain& chain, const std::vector<std::string>& wal
         WalletLocation location(wallet_file);
 
         if (!wallet_paths.insert(location.GetPath()).second) {
-            chain.initError(strprintf(_("Error loading wallet %s. Duplicate -wallet filename specified."), wallet_file));
-            return false;
+            return Error<std::string>(strprintf(_("Error loading wallet %s. Duplicate -wallet filename specified."), wallet_file));
         }
 
         std::string error_string;
         std::string warning_string;
         bool verify_success = CWallet::Verify(chain, location, salvage_wallet, error_string, warning_string);
-        if (!error_string.empty()) chain.initError(error_string);
         if (!warning_string.empty()) chain.initWarning(warning_string);
-        if (!verify_success) return false;
+        if (!verify_success) return Error<std::string>(error_string);
     }
 
-    return true;
+    return Success<void>();
 }
 
 bool LoadWallets(interfaces::Chain& chain, const std::vector<std::string>& wallet_files)

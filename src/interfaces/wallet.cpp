@@ -11,6 +11,7 @@
 #include <policy/feerate.h>
 #include <policy/fees.h>
 #include <primitives/transaction.h>
+#include <result.h>
 #include <script/standard.h>
 #include <support/allocators/secure.h>
 #include <sync.h>
@@ -510,7 +511,7 @@ public:
     {
     }
     void registerRpcs() override { return RegisterWalletRPCCommands(m_chain, m_rpc_handlers); }
-    bool verify() override { return VerifyWallets(m_chain, m_wallet_filenames); }
+    Result<void, std::string> verify() override { return VerifyWallets(m_chain, m_wallet_filenames); }
     bool load() override { return LoadWallets(m_chain, m_wallet_filenames); }
     void start(CScheduler& scheduler) override { return StartWallets(scheduler); }
     void flush() override { return FlushWallets(); }

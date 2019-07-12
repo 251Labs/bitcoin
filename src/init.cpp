@@ -1320,8 +1320,9 @@ bool AppInitMain(InitInterfaces& interfaces)
 
     // ********************************************************* Step 5: verify wallet database integrity
     for (const auto& client : interfaces.chain_clients) {
-        if (!client->verify()) {
-            return false;
+        Result<void, std::string> result = client->verify();
+        if (!result.success) {
+            return InitError(result.error_value);
         }
     }
 

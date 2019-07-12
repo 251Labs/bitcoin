@@ -7,6 +7,7 @@
 
 #include <optional.h>               // For Optional and nullopt
 #include <primitives/transaction.h> // For CTransactionRef
+#include <result.h>
 
 #include <memory>
 #include <stddef.h>
@@ -280,7 +281,7 @@ public:
     virtual void registerRpcs() = 0;
 
     //! Check for errors before loading.
-    virtual bool verify() = 0;
+    virtual Result<void, std::string> verify() = 0;
 
     //! Load saved state.
     virtual bool load() = 0;
